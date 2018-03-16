@@ -18,7 +18,7 @@ namespace netcore_websocket_client {
                     try {
                         await Connect (webSocketUri, cts).ConfigureAwait (false);
                     } catch (OperationCanceledException) {
-                        Console.WriteLine ("Stoping all tasks");
+                        //do nothing
                     } catch (Exception ex) {
                         Console.Error.WriteLine (ex);
                     }
@@ -60,9 +60,12 @@ namespace netcore_websocket_client {
 
                     await Task.WhenAll (sendTask, recvTask).ConfigureAwait (false);
                 } finally {
-                    Console.WriteLine ("Closing connection...");
-                    if (webSocket.State != WebSocketState.Aborted) {
-                        await webSocket.CloseAsync (WebSocketCloseStatus.NormalClosure, "client initiate disconnect", CancellationToken.None);
+                    if (webSocket.State != WebSocketState.Aborted &&
+                        webSocket.State != WebSocketState.Closed) {
+                        Console.WriteLine ("closing connection...");
+                        await Task.WhenAny (
+                            webSocket.CloseAsync (WebSocketCloseStatus.NormalClosure, "client initiate closing", CancellationToken.None),
+                            Task.Delay (new TimeSpan (0, 1, 0)));
                     }
                 }
             }
@@ -79,8 +82,14 @@ namespace netcore_websocket_client {
                 string sendStr = @"hello ClientWebSocket!";
                 try {
                     var sendBuffer = StringToByteArray (sendStr);
-
-                    await webSocket.SendAsync (new ArraySegment<byte> (sendBuffer), WebSocketMessageType.Text, true, token);
+                    var sendTask = webSocket.SendAsync (new ArraySegment<byte> (sendBuffer), WebSocketMessageType.Text, true, CancellationToken.None);
+                    var awaitResult = await Task.WhenAny (
+                        sendTask,
+                        Task.Delay (new TimeSpan (0, 1, 0), token)
+                    );
+                    if (awaitResult != sendTask) {
+                        Console.WriteLine ($"send {sendStr} failed.");
+                    }
                 } catch (OperationCanceledException) {
                     Console.WriteLine ("cancel current sending operation...");
                 } catch (Exception ex) {
@@ -99,17 +108,24 @@ namespace netcore_websocket_client {
 
                 try {
                     var recvBuffer = new byte[bufferSize];
-                    var resultResult = await webSocket.ReceiveAsync (new ArraySegment<byte> (recvBuffer), token);
+                    var receiveTask = webSocket.ReceiveAsync (new ArraySegment<byte> (recvBuffer), CancellationToken.None);
+                    var resultResult = await Task.WhenAny (
+                        receiveTask,
+                        Task.Delay (new TimeSpan (0, 1, 0), token));
 
-                    #region Remote Initiated Closing
-                    if (resultResult.MessageType == WebSocketMessageType.Close) {
-                        Console.WriteLine ("receive close connection request");
-                        await webSocket.CloseAsync (WebSocketCloseStatus.NormalClosure, "server initiate closing", token);
-                        break;
+                    if (resultResult == receiveTask) {
+                        #region Remote Initiated Closing
+                        if (receiveTask.Result.MessageType == WebSocketMessageType.Close) {
+
+                            Console.WriteLine ("receive close connection request");
+                            await webSocket.CloseAsync (WebSocketCloseStatus.NormalClosure, "server initiate closing", token);
+                            break;
+
+                        }
+                        #endregion
+
+                        Console.WriteLine ("Receive: " + GetReadableString (recvBuffer));
                     }
-                    #endregion
-
-                    Console.WriteLine ("Receive: " + GetReadableString (recvBuffer));
                 } catch (OperationCanceledException) {
                     Console.WriteLine ("cancel current receiving operation...");
                     //await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure,"client shutdown", CancellationToken.None);
@@ -117,7 +133,6 @@ namespace netcore_websocket_client {
                     Console.Error.WriteLine (ex);
                 }
             }
-            Console.WriteLine ("end receiving...");
         }
 
         #region Util functions
