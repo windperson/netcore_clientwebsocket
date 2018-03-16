@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27512.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "netcore_websocket_client", "netcore_websocket_client.csproj", "{FA26ABA4-2A39-4DBA-A3F9-F41B1A073EFD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FA26ABA4-2A39-4DBA-A3F9-F41B1A073EFD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FA26ABA4-2A39-4DBA-A3F9-F41B1A073EFD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FA26ABA4-2A39-4DBA-A3F9-F41B1A073EFD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FA26ABA4-2A39-4DBA-A3F9-F41B1A073EFD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {232E980B-8FF8-4082-B6D5-BCC9177A5D20}
+	EndGlobalSection
+EndGlobal
